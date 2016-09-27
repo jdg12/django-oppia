@@ -1,4 +1,4 @@
-# quiz/models.py
+# quiz/models/quiz.py
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.core import serializers
@@ -6,18 +6,41 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-import datetime
+from questions import Question
 
-from questions import *
-    
-class QuizQuestion(models.Model):
-    quiz = models.ForeignKey(Quiz)
-    question = models.ForeignKey(Question)
-    order = models.IntegerField(default=1)
+class Quiz(models.Model):
+    owner = models.ForeignKey(User)
+    created_date = models.DateTimeField('date created',default=timezone.now)
+    lastupdated_date = models.DateTimeField('date updated',default=timezone.now)
+    draft = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
+    title = models.TextField(blank=False)
+    description = models.TextField(blank=True)
+    questions = models.ManyToManyField(Question, through='QuizQuestion')
     
     class Meta:
-        verbose_name = _('QuizQuestion')
-        verbose_name_plural = _('QuizQuestions')
+        verbose_name = _('Quiz')
+        verbose_name_plural = _('Quizzes')
+        
+    def __unicode__(self):
+        return self.title
+    
+    def no_attempts(self):
+        no_attempts = QuizAttempt.objects.filter(quiz=self).count()
+        return no_attempts
+    
+    def avg_score(self):
+        # TODO - sure this could be tidied up
+        attempts = QuizAttempt.objects.filter(quiz=self)
+        total = 0
+        for a in attempts:
+            total = total + a.get_score_percent()
+        if self.no_attempts > 0:
+            avg_score = int(total/self.no_attempts())
+        else:
+            avg_score = 0
+        return avg_score
+    
     
 class QuizAttempt(models.Model):
     user = models.ForeignKey(User)
@@ -76,23 +99,6 @@ class QuizAttempt(models.Model):
             else:
                 return None
 
-class QuizAttemptResponse(models.Model):
-    quizattempt = models.ForeignKey(QuizAttempt)
-    question = models.ForeignKey(Question)
-    score = models.DecimalField(decimal_places=2, max_digits=6)
-    text = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name = _('QuizAttemptResponse')
-        verbose_name_plural = _('QuizAttemptResponses')
-       
-    def get_score_percent(self):
-        if self.question.get_maxscore() > 0:
-            percent = int(round(float(self.score) * 100 / self.question.get_maxscore()))
-        else:
-            percent = 0
-        return percent
-
 
 class QuizProps(models.Model):
     quiz = models.ForeignKey(Quiz)
@@ -105,27 +111,3 @@ class QuizProps(models.Model):
         
     def __unicode__(self):
         return self.name
-    
-class QuestionProps(models.Model):
-    question = models.ForeignKey(Question)
-    name = models.CharField(max_length=200)
-    value = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name = _('QuestionProp')
-        verbose_name_plural = _('QuestionProps')
-        
-    def __unicode__(self):
-        return self.name
-    
-class ResponseProps(models.Model):
-    response = models.ForeignKey(Response)
-    name = models.CharField(max_length=200)
-    value = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name = _('ResponseProp')
-        verbose_name_plural = _('ResponseProps')
-        
-    def __unicode__(self):
-        return self.name  

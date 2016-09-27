@@ -1,4 +1,4 @@
-# oppia/schedule.py
+# schedule/schedule.py
 import datetime
 import json
 

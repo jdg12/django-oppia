@@ -1,4 +1,4 @@
-# oppia/activity.py
+# models/activity.py
 import datetime
 import json
 
@@ -9,13 +9,14 @@ from django.db.models import Max, Sum, Q, F, Count
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 
-from oppia.quiz.models import Quiz, QuizAttempt
+from oppia.quiz.models.models import *
+from oppia.quiz.models.questions import *
 
 from tastypie.models import create_api_key
 
 from xml.dom.minidom import *
 
-from oppia.course import *
+from oppia.models.course import *
 
 class Activity(models.Model):
     QUIZ = 'quiz'

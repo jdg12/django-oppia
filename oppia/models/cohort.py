@@ -16,8 +16,8 @@ from tastypie.models import create_api_key
 
 from xml.dom.minidom import *
 
-from oppia.course import *
-from oppia.schedule import *
+from oppia.models.course import *
+from oppia.models.schedule import *
 
 class Cohort(models.Model): 
     description = models.CharField(max_length=100)
